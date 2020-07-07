@@ -156,7 +156,11 @@ public class Main {
 			}
 
 			/* competition parameters */
-			String identifier = cmd.getOptionValue("id", (new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss:SSS")).format(new Date()));
+			String osdepstr = "yyyy-MM-dd-HH:mm:ss:SSS";
+			if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
+				osdepstr = "yyyy-MM-dd_HH-mm-ss-SSS";
+			}
+			String identifier = cmd.getOptionValue("id", (new SimpleDateFormat(osdepstr)).format(new Date()));
 			int games = Integer.parseInt(cmd.getOptionValue("g", "1"));
 			boolean verbose = cmd.hasOption("v");
 			LOG.info("competition parameters: id ({}), rounds ({}), verbose ({})", identifier, games, verbose);
