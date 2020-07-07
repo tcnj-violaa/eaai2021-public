@@ -37,24 +37,24 @@ For the instruction below, on Linux systems, use (:) for path delimiter. On Wind
 For Windows, due to filename and path convention, following lines need to be changed.
 
 At line 159 of eaai.ginrummy.Main.java, change
-
+```java
 String identifier = cmd.getOptionValue("id", (new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss:SSS")).format(new Date()));
-
+```
 into
-
+```java
 String osdepstr = "yyyy-MM-dd-HH:mm:ss:SSS";
 if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
 	osdepstr = "yyyy-MM-dd_HH-mm-ss-SSS";
 }
 String identifier = cmd.getOptionValue("id", (new SimpleDateFormat(osdepstr)).format(new Date()));
-
+```
 At line 48 of eaai.ginrummy.util.FileMap.java, change
-
+```java
 Path path = Paths.get(String.format("./%s.zip", identifier)).toAbsolutePath().normalize();
 URI uri = URI.create("jar:file:" + path);
-
+```
 into
-
+```java
 URI uri;
 if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
 	uri = URI.create("jar:" + Paths.get(String.format("./%s.zip", identifier)).toUri());
@@ -62,7 +62,7 @@ if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
 	Path path = Paths.get(String.format("./%s.zip", identifier)).toAbsolutePath().normalize();
 	uri = URI.create("jar:file:" + path);
 }
-
+```
 # Compile
 
 ~~Clone vermount repo.~~
