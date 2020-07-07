@@ -5,7 +5,7 @@
 3. Sit back and Wait.
 4. You will get the jar files in the target directory.
 
-<s>
+~~
 # Dependencies
 - Apache Log4J
 	Webiste: http://logging.apache.org/log4j/
@@ -94,5 +94,4 @@ To run (Linux): Same as current instruction...voila!
 java -jar vermouth.jar --oneall --games 100 --agents 'file:./SimpleGinRummyPlayer' 'file:./SimpleGinRummyPlayer'
 
 To run (Windows):
-</s>
-
+~~
