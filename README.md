@@ -8,28 +8,28 @@
 # Dependencies
 
 ~~- Apache Log4J~~
-	~~Webiste: http://logging.apache.org/log4j/
-	~~Download: http://logging.apache.org/log4j/2.x/download.html
-	~~Which JAR to use: https://logging.apache.org/log4j/2.0/faq.html#which_jars
-~~- Apache Commons
-	~~Website: http://commons.apache.org/
-	~~Download: http://commons.apache.org/proper/commons-cli/download_cli.cgi
-~~- opencsv
-	~~Website: http://opencsv.sourceforge.net/
-	~~Download: https://sourceforge.net/projects/opencsv/
+	~~Webiste: http://logging.apache.org/log4j/~~
+	~~Download: http://logging.apache.org/log4j/2.x/download.html~~
+	~~Which JAR to use: https://logging.apache.org/log4j/2.0/faq.html#which_jars~~
+~~- Apache Commons~~
+	~~Website: http://commons.apache.org/~~
+	~~Download: http://commons.apache.org/proper/commons-cli/download_cli.cgi~~
+~~- opencsv~~
+	~~Website: http://opencsv.sourceforge.net/~~
+	~~Download: https://sourceforge.net/projects/opencsv/~~
 
-~~Download the above and put them under vermouth-master/src/main/java/dep (this is a new folder; assumed to be used in the instruction below). Also create two directories named bin and config under vermouth-master/src/main/java. Create a text file named Manifest.mf inside the config directory and put the content like below:
+~~Download the above and put them under vermouth-master/src/main/java/dep (this is a new folder; assumed to be used in the instruction below). Also create two directories named bin and config under vermouth-master/src/main/java. Create a text file named Manifest.mf inside the config directory and put the content like below:~~
 
-~~Manifest-Version: 1.0
-~~Class-Path: ./dep/apache-log4j-2.13.3-bin/log4j-core-2.13.3.jar ./dep/apache-log4j-2.13.3-bin/log4j-api-2.13.3.jar ./dep/commons-cli-1.4/commons-cli-1.4.jar ./dep/opencsv-5.2.jar
-~~Main-Class: eaai.ginrummy.Main
+~~Manifest-Version: 1.0~~
+~~Class-Path: ./dep/apache-log4j-2.13.3-bin/log4j-core-2.13.3.jar ./dep/apache-log4j-2.13.3-bin/log4j-api-2.13.3.jar ./dep/commons-cli-1.4/commons-cli-1.4.jar ./dep/opencsv-5.2.jar~~
+~~Main-Class: eaai.ginrummy.Main~~
 
-~~The Class-Path info of course needs to be adjusted accordingly if you want to give another name for the new directories. The final directory structure looks like:
+~~The Class-Path info of course needs to be adjusted accordingly if you want to give another name for the new directories. The final directory structure looks like:~~
 
-~~vermouth-master -> src -> main -> java -> eaai, ginrummy, dep, bin, config
+~~vermouth-master -> src -> main -> java -> eaai, ginrummy, dep, bin, config~~
 
-~~with the dependencies inside dep, and Manifest.mf inside config, and bin is empty.
-~~
+~~with the dependencies inside dep, and Manifest.mf inside config, and bin is empty.~~
+
 # Source code change needed for Windows
 
 For the instruction below, on Linux systems, use (:) for path delimiter. On Windows systems, use semicolon (;) instead, as shown below.
@@ -65,33 +65,33 @@ if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
 
 # Compile
 
-~~Clone vermount repo.
+~~Clone vermount repo.~~
 
-~~cd src/main/java
+~~cd src/main/java~~
 
-~~javac -d ./bin ginrummy/GinRummyGame.java
+~~javac -d ./bin ginrummy/GinRummyGame.java~~
 
-~~javac eaai/ginrummy/Main.java -d ./bin -cp ./;./bin;./dep/apache-log4j-2.13.3-bin/log4j-core-2.13.3.jar;./dep/apache-log4j-2.13.3-bin/log4j-api-2.13.3.jar;./dep/commons-cli-1.4/commons-cli-1.4.jar;./dep/opencsv-5.2.jar
+~~javac eaai/ginrummy/Main.java -d ./bin -cp ./;./bin;./dep/apache-log4j-2.13.3-bin/log4j-core-2.13.3.jar;./dep/apache-log4j-2.13.3-bin/log4j-api-2.13.3.jar;./dep/commons-cli-1.4/commons-cli-1.4.jar;./dep/opencsv-5.2.jar~~
 
-~~cd bin
+~~cd bin~~
 
-~~jar cvfm vermouth.jar ../conf/Manifest.mf .
+~~jar cvfm vermouth.jar ../conf/Manifest.mf .~~
 
-~~Copy the created vermouth.jar to the vermouth-master/src/main/java so that the classpath defined inside Manifest.mf works.
+~~Copy the created vermouth.jar to the vermouth-master/src/main/java so that the classpath defined inside Manifest.mf works.~~
 
 # Run
 
-~~To see help:
+~~To see help:~~
 
-~~java -jar vermouth.jar -h
+~~java -jar vermouth.jar -h~~
 
-~~To compile new agent:
+~~To compile new agent:~~
 
-~~javac -cp .;./vermouth.jar SimpleGinRummyPlayer.java
+~~javac -cp .;./vermouth.jar SimpleGinRummyPlayer.java~~
 
-~~To run (Linux): Same as current instruction...voila!
+~~To run (Linux): Same as current instruction...voila!~~
 
-~~java -jar vermouth.jar --oneall --games 100 --agents 'file:./SimpleGinRummyPlayer' 'file:./SimpleGinRummyPlayer'
+~~java -jar vermouth.jar --oneall --games 100 --agents 'file:./SimpleGinRummyPlayer' 'file:./SimpleGinRummyPlayer'~~
 
-~~To run (Windows):
+~~To run (Windows):~~
 
