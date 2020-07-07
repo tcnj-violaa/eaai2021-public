@@ -5,8 +5,8 @@
 3. Sit back and Wait.
 4. You will get the jar files in the target directory.
 
-~~
 # Dependencies
+~~
 - Apache Log4J
 	Webiste: http://logging.apache.org/log4j/
 	Download: http://logging.apache.org/log4j/2.x/download.html
@@ -29,7 +29,7 @@ The Class-Path info of course needs to be adjusted accordingly if you want to gi
 vermouth-master -> src -> main -> java -> eaai, ginrummy, dep, bin, config
 
 with the dependencies inside dep, and Manifest.mf inside config, and bin is empty.
-
+~~
 # Source code change needed for Windows
 
 For the instruction below, on Linux systems, use (:) for path delimiter. On Windows systems, use semicolon (;) instead, as shown below.
@@ -64,7 +64,7 @@ if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
 }
 
 # Compile
-
+~~
 Clone vermount repo.
 
 cd src/main/java
@@ -78,9 +78,9 @@ cd bin
 jar cvfm vermouth.jar ../conf/Manifest.mf .
 
 Copy the created vermouth.jar to the vermouth-master/src/main/java so that the classpath defined inside Manifest.mf works.
-
+~~
 # Run
-
+~~
 To see help:
 
 java -jar vermouth.jar -h
