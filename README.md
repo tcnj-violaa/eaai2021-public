@@ -81,7 +81,7 @@ if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
 
 # Run
 
-Use import instead of package. Package may be used if we are creating a jar -- may need testing.
+Use import instead of package. Package may be used if we are creating a jar -- may need testing. See the top of SimplePlayer.java for example.
 
 ```java
 import ginrummy.*;
