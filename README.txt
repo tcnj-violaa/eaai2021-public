@@ -1,3 +1,10 @@
+# FORGET ALL BELOW: JUST USE MAVEN.
+
+1. Install Maven
+2. Run [mvn package] inside vermouth-master root (where pom.xml resides).
+3. Sit back and Wait.
+4. You will get the jar files in the target directory.
+
 # Dependencies
 - Apache Log4J
 	Webiste: http://logging.apache.org/log4j/
