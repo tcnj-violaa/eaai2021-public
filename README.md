@@ -7,7 +7,7 @@
 
 # Dependencies
 
-~~- Apache Log4J
+~~- Apache Log4J~~
 	~~Webiste: http://logging.apache.org/log4j/
 	~~Download: http://logging.apache.org/log4j/2.x/download.html
 	~~Which JAR to use: https://logging.apache.org/log4j/2.0/faq.html#which_jars
