@@ -1,5 +1,4 @@
-package ginrummy;
-
+import ginrummy.*;
 import java.util.ArrayList;
 import java.util.Random;
 
