@@ -81,17 +81,20 @@ if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
 
 # Run
 
-~~To see help:~~
+Use import instead of package. Package may be used if we are creating a jar -- may need testing.
 
-~~java -jar vermouth.jar -h~~
+```java
+import ginrummy.*;
+```
 
-~~To compile new agent:~~
+To run (Linux):
 
-~~javac -cp .;./vermouth.jar SimpleGinRummyPlayer.java~~
+```bash
+java -jar vermouth.jar --oneall --games 100 --agents 'file:./SimpleGinRummyPlayer' 'file:./SimpleGinRummyPlayer'
+```
 
-~~To run (Linux): Same as current instruction...voila!~~
+To run (Windows):
 
-~~java -jar vermouth.jar --oneall --games 100 --agents 'file:./SimpleGinRummyPlayer' 'file:./SimpleGinRummyPlayer'~~
-
-~~To run (Windows):~~
-
+```bash
+java -jar vermouth.jar --oneall --games 100 --agents "file://D:/Documents/GitHub/eaai2021/vermouth-master/src/main/java/SimplePlayer" "file://D:/Documents/GitHub/eaai2021/vermouth-master/src/main/java/SimplePlayer"
+```
