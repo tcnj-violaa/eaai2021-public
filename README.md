@@ -87,14 +87,14 @@ Use import instead of package. Package may be used if we are creating a jar -- m
 import ginrummy.*;
 ```
 
-To run (Linux):
+To run (Linux): Linux can use relative path.
 
 ```bash
 java -jar vermouth.jar --oneall --games 100 --agents 'file:./SimpleGinRummyPlayer' 'file:./SimpleGinRummyPlayer'
 ```
 
-To run (Windows):
+To run (Windows): Windows must use full absolute path.
 
 ```bash
-java -jar vermouth.jar --oneall --games 100 --agents "file://D:/Documents/GitHub/eaai2021/vermouth-master/src/main/java/SimplePlayer" "file://D:/Documents/GitHub/eaai2021/vermouth-master/src/main/java/SimplePlayer"
+java -jar vermouth.jar --oneall --games 100 --agents "file://D:/eaai2021/vermouth-master/src/main/java/SimplePlayer" "file://D:/eaai2021/vermouth-master/src/main/java/SimplePlayer"
 ```
