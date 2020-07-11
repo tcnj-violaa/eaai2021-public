@@ -1,0 +1,4 @@
+These files are here simply for organization's sake.
+
+Move them into a folder where you can compile it against your vermouth.jar file
+and run sample games with it. 
