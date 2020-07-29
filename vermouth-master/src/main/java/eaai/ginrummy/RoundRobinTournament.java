@@ -79,7 +79,7 @@ public class RoundRobinTournament extends Tournament {
 
 			int m = 0;
 			for(int p0 = 0; p0 < players.size(); p0 += 1, m += 1) {
-				for(int p1 = 0; p1 < players.size(); p1 += 1, m += 1) {
+				for(int p1 = p0 + 1; p1 < players.size(); p1 += 1, m += 1) {
 					LOG.info("starting match [{}]{} vs [{}]{}", p0, classes.get(p0), p1, classes.get(p1));
 					int wins = 0;
 					for(int g = 0; g < rounds; g += 1) {
@@ -92,13 +92,13 @@ public class RoundRobinTournament extends Tournament {
 						PrintStream err = System.err; System.setErr(gameStream);
 
 						GinRummyAgent agent0 = new GinRummyAgent(players.get(p0), p0, statsWriter, gameStream, gameStream);
-						GinRummyAgent agent1 = new GinRummyAgent(players.get(p0), p1, statsWriter, gameStream, gameStream);
+						GinRummyAgent agent1 = new GinRummyAgent(players.get(p1), p1, statsWriter, gameStream, gameStream);
 						GinRummyGame game = new GinRummyGame(agent0, agent1);
 						int[] scores = game.play();
 
 						System.setOut(out);
 						System.setErr(err);
-						gameStream.close();
+						if(gameStream != System.out) { gameStream.close(); }
 
 						gamesWriter.writeNext(new String[] { Integer.toString(m), Integer.toString(g), Integer.toString(p0), Integer.toString(scores[0]), Integer.toString(scores[0] > scores[1] ? 1 : 0) });
 						gamesWriter.writeNext(new String[] { Integer.toString(m), Integer.toString(g), Integer.toString(p1), Integer.toString(scores[1]), Integer.toString(scores[0] < scores[1] ? 1 : 0) });

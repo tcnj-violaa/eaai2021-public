@@ -45,13 +45,9 @@ public class FileMap {
 		if(filesystems.containsKey(identifier)) { }
 
 		/* */
-		URI uri;
-		if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
-			uri = URI.create("jar:" + Paths.get(String.format("./%s.zip", identifier)).toUri());
-		} else {
-			Path path = Paths.get(String.format("./%s.zip", identifier)).toAbsolutePath().normalize();
-			uri = URI.create("jar:file:" + path);
-		}
+		//Path path = Paths.get(String.format("./%s.zip", identifier)).toAbsolutePath().normalize();
+		//URI uri = URI.create("jar:file:" + path);
+		URI uri = URI.create("jar:" + Paths.get(String.format("./%s.zip", identifier)).toUri());
 
 		/* */
 		Map<String, String> env = new HashMap<>();

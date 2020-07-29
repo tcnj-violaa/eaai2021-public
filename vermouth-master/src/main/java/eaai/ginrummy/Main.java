@@ -90,6 +90,11 @@ public class Main {
 				.longOpt("roundrobin")
 				.argName("roundrobin")
 				.desc("run a round robin competition between the competitors")
+				.build())
+			.addOption(Option.builder("el")
+				.longOpt("elo")
+				.argName("elo")
+				.desc("run a Elo-scored competition between the competitors")
 				.build()));
 
 		/* specify competition parameters */
@@ -148,19 +153,19 @@ public class Main {
 			String type = null;
 			if(cmd.hasOption("1v")) { type = "1v"; }
 			if(cmd.hasOption("rr")) { type = "rr"; }
+			if(cmd.hasOption("el")) { type = "el"; }
 			switch(type) {
 				default:   LOG.warn("no competition type specified, setting one-vs-all as default");
 				case "1v": LOG.info("competition type: one-vs-all");
 					break;
 				case "rr": LOG.info("competition type: round-robin");
+					break;
+				case "el": LOG.info("competition type: elo");
+					break;
 			}
 
 			/* competition parameters */
-			String osdepstr = "yyyy-MM-dd-HH:mm:ss:SSS";
-			if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
-				osdepstr = "yyyy-MM-dd_HH-mm-ss-SSS";
-			}
-			String identifier = cmd.getOptionValue("id", (new SimpleDateFormat(osdepstr)).format(new Date()));
+			String identifier = cmd.getOptionValue("id", (new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS")).format(new Date()));
 			int games = Integer.parseInt(cmd.getOptionValue("g", "1"));
 			boolean verbose = cmd.hasOption("v");
 			LOG.info("competition parameters: id ({}), rounds ({}), verbose ({})", identifier, games, verbose);
@@ -193,6 +198,7 @@ public class Main {
 			switch(type) {
 				case "1v" : new OneAllTournament     (agents, games, cmd.hasOption("v"), random).run(); break;
 			 	case "rr" : new RoundRobinTournament (agents, games, cmd.hasOption("v"), random).run(); break;
+				case "el" : new EloTournament        (agents, games, cmd.hasOption("v"), random).run(); break;
 			}
 
 			try {

@@ -72,6 +72,13 @@ public class GinRummyPlayerClass {
 	}
 
 	/**
+	 *
+	 */
+	public String name() {
+		return player.getName();
+	}
+
+	/**
 	 * Returns a new instance of the loaded GinRummyPlayer class.
 	 *
 	 * @return a new instance of the loaded GinRummyPlayer class

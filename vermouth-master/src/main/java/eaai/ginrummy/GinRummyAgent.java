@@ -69,6 +69,7 @@ public class GinRummyAgent implements GinRummyPlayer {
 	 * @param startingPlayerNum starting player number (0/1)
 	 * @param cards dealt cards
 	 */
+	@Override
 	public void startGame(int playerNum, int startingPlayerNum, Card[] cards) {
 		PrintStream out = swapOut(this.out), err = swapErr(this.err);
 		long time = monitor.getThreadCpuTime(Thread.currentThread().getId());
@@ -85,6 +86,7 @@ public class GinRummyAgent implements GinRummyPlayer {
 	 * @param card face-up card on the draw pile
 	 * @return whether or not player will draw the given face-up card on the draw pile
 	 */
+	@Override
 	public boolean willDrawFaceUpCard(Card card) {
 		PrintStream out = swapOut(this.out), err = swapErr(this.err);
 		long time = monitor.getThreadCpuTime(Thread.currentThread().getId());
@@ -104,6 +106,7 @@ public class GinRummyAgent implements GinRummyPlayer {
 	 * @param playerNum - player drawing a card
 	 * @param drawnCard - the card drawn or null, depending on whether the card is known to the player or not, respectively.
 	 */
+	@Override
 	public void reportDraw(int playerNum, Card drawnCard) {
 		PrintStream out = swapOut(this.out), err = swapErr(this.err);
 		long time = monitor.getThreadCpuTime(Thread.currentThread().getId());
@@ -121,6 +124,7 @@ public class GinRummyAgent implements GinRummyPlayer {
 	 * If this is not a card in the player's possession, the player forfeits the game.
 	 * @return the player's chosen card for discarding
 	 */
+	@Override
 	public Card getDiscard() {
 		PrintStream out = swapOut(this.out), err = swapErr(this.err);
 		long time = monitor.getThreadCpuTime(Thread.currentThread().getId());
@@ -139,6 +143,7 @@ public class GinRummyAgent implements GinRummyPlayer {
 	 * @param playerNum the discarding player
 	 * @param discardedCard the card that was discarded
 	 */
+	@Override
 	public void reportDiscard(int playerNum, Card discardedCard) {
 		PrintStream out = swapOut(this.out), err = swapErr(this.err);
 		long time = monitor.getThreadCpuTime(Thread.currentThread().getId());
@@ -157,6 +162,7 @@ public class GinRummyAgent implements GinRummyPlayer {
 	 * When final melds have been reported for the other player, a player should return their final melds for the round.
 	 * @return null if continuing play and opponent hasn't melded, or an ArrayList of ArrayLists of melded cards.
 	 */
+	@Override
 	public ArrayList<ArrayList<Card>> getFinalMelds() {
 		PrintStream out = swapOut(this.out), err = swapErr(this.err);
 		long time = monitor.getThreadCpuTime(Thread.currentThread().getId());
@@ -174,6 +180,7 @@ public class GinRummyAgent implements GinRummyPlayer {
 	 * @param playerNum player that has revealed melds
 	 * @param melds an ArrayList of ArrayLists of melded cards with the last ArrayList (possibly empty) being deadwood.
 	 */
+	@Override
 	public void reportFinalMelds(int playerNum, ArrayList<ArrayList<Card>> melds) {
 		PrintStream out = swapOut(this.out), err = swapErr(this.err);
 		long time = monitor.getThreadCpuTime(Thread.currentThread().getId());
@@ -189,6 +196,7 @@ public class GinRummyAgent implements GinRummyPlayer {
 	 * Report current player scores, indexed by 0-based player number.
 	 * @param scores current player scores, indexed by 0-based player number
 	 */
+	@Override
 	public void reportScores(int[] scores) {
 		PrintStream out = swapOut(this.out), err = swapErr(this.err);
 		long time = monitor.getThreadCpuTime(Thread.currentThread().getId());
@@ -206,6 +214,7 @@ public class GinRummyAgent implements GinRummyPlayer {
 	 * @param layoffCard card being laid off
 	 * @param opponentMeld the opponent meld that card is being added to
 	 */
+	@Override
 	public void reportLayoff(int playerNum, Card layoffCard, ArrayList<Card> opponentMeld) {
 		PrintStream out = swapOut(this.out), err = swapErr(this.err);
 		long time = monitor.getThreadCpuTime(Thread.currentThread().getId());
@@ -222,6 +231,7 @@ public class GinRummyAgent implements GinRummyPlayer {
 	 * @param playerNum player of hand reported
 	 * @param hand complete hand of given player
 	 */
+	@Override
 	public void reportFinalHand(int playerNum, ArrayList<Card> hand) {
 		PrintStream out = swapOut(this.out), err = swapErr(this.err);
 		long time = monitor.getThreadCpuTime(Thread.currentThread().getId());
