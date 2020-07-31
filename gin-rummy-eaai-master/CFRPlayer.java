@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.TreeMap;
+import StateNode;
 
 
 /**
@@ -31,16 +33,31 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.
 
  */
-public class SimpleGinRummyPlayer implements GinRummyPlayer {
+
+//Many comments are notes/thoughts, not definite nor guaranteed correct
+public class CFRPlayer implements GinRummyPlayer {
 	private int playerNum;
 	@SuppressWarnings("unused")
 	private int startingPlayerNum;
 	private ArrayList<Card> cards = new ArrayList<Card>();
 	private Random random = new Random();
 	private boolean opponentKnocked = false;
+	private boolean train = false;
+	private TreeMap<String,StateNode> stateNodeMap = new TreeMap<String, StateNode>; //change from string probably. We're gonn have more complicated history
+	private String turn_history = ""; //maybe a short player-based history, say, for the round (would make proper actions based on phase easier)
+	private final num_actions = 55;
+	private int[] actions = new int[num_actions]
+	//actions: 0 = draw face-up; 1 = draw from discard; 2 = knock ; 3 = don't knock ; 4-55 discard cards based on int index
+	//definitely need some sort of trimming logic for this, so cfr only explores tree as necessary--could cut down size significantly
+	//on draw, traverse only actions 0 and 1; when we can knock, traverse 2 and 3
+	//on discard, traverse only cards in hand--"try" discarding them...
+
+	//We probably want this player to be serializable so we can save the class and don't have to 
+	//retrain it every single time
+	
 	Card faceUpCard, drawnCard; 
 	ArrayList<Long> drawDiscardBitstrings = new ArrayList<Long>();
-
+	
 	@Override
 	public void startGame(int playerNum, int startingPlayerNum, Card[] cards) {
 		this.playerNum = playerNum;
@@ -54,19 +71,33 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 
 	@Override
 	public boolean willDrawFaceUpCard(Card card) {
+		//poll from strategy to decide if we'll draw...	
 		// Return true if card would be a part of a meld, false otherwise.
 		this.faceUpCard = card;
 		@SuppressWarnings("unchecked")
 		ArrayList<Card> newCards = (ArrayList<Card>) cards.clone();
+		//If we draw, add that action to history
+		//If we draw, add the new card to our hand/info set
 		newCards.add(card);
 		for (ArrayList<Card> meld : GinRummyUtil.cardsToAllMelds(newCards))
 			if (meld.contains(card))
 				return true;
 		return false;
+
+		//work-in-progress cfr-based logic...
+		//cards_string and turn_history currently dummy variables, won't compile
+
+		String info = cards_string + turn_history;
+		int draw_action = getAction(info);
+		boolean face_up = draw_action == 0 ? true : false;
+
+		return face_up;
+		
 	}
 
 	@Override
 	public void reportDraw(int playerNum, Card drawnCard) {
+		// Add to history if other player draws
 		// Ignore other player draws.  Add to cards if playerNum is this player.
 		if (playerNum == this.playerNum) {
 			cards.add(drawnCard);
@@ -77,6 +108,7 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Card getDiscard() {
+		// Add discard to history
 		// Discard a random card (not just drawn face up) leaving minimal deadwood points.
 		int minDeadwood = Integer.MAX_VALUE;
 		ArrayList<Card> candidateCards = new ArrayList<Card>();
@@ -114,6 +146,7 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 
 	@Override
 	public void reportDiscard(int playerNum, Card discardedCard) {
+		// Add other player discard to history...
 		// Ignore other player discards.  Remove from cards if playerNum is this player.
 		if (playerNum == this.playerNum)
 			cards.remove(discardedCard);
@@ -121,15 +154,24 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 
 	@Override
 	public ArrayList<ArrayList<Card>> getFinalMelds() {
+		// Poll strategy to see if we might knock, given valid cards/deadwood
 		// Check if deadwood of maximal meld is low enough to go out. 
 		ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(cards);
 		if (!opponentKnocked && (bestMeldSets.isEmpty() || GinRummyUtil.getDeadwoodPoints(bestMeldSets.get(0), cards) > GinRummyUtil.MAX_DEADWOOD))
 			return null;
 		return bestMeldSets.isEmpty() ? new ArrayList<ArrayList<Card>>() : bestMeldSets.get(random.nextInt(bestMeldSets.size()));
+
+		//WIP code - depending on implementation may need checking for validity of knocking...
+		String info = cards_string + turn_history;
+		int draw_action = getAction(info);
+		boolean knock = draw_action == 0 ? true : false;
+		return knock;
+	
 	}
 
 	@Override
 	public void reportFinalMelds(int playerNum, ArrayList<ArrayList<Card>> melds) {
+		// Add to history?
 		// Melds ignored by simple player, but could affect which melds to make for complex player.
 		if (playerNum != this.playerNum)
 			opponentKnocked = true;
@@ -138,6 +180,7 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 	@Override
 	public void reportScores(int[] scores) {
 		// Ignored by simple player, but could affect strategy of more complex player.
+		// use this for regret, maybe?
 	}
 
 	@Override
@@ -150,5 +193,27 @@ public class SimpleGinRummyPlayer implements GinRummyPlayer {
 	public void reportFinalHand(int playerNum, ArrayList<Card> hand) {
 		// Ignored by simple player, but could affect strategy of more complex player.		
 	}
+
+	private int getAction(String state_node){
+		Node node = nodeMap.get(state_node);
+
+		//Currently just get player 1's strategy--we're only maintaining a 
+		//tree for this player anyway
+		double[] cur_strat = node.getStrategy(0);
+
+		double r = random.nextDouble();
+		int action=0;
+		double cumulativeProbability=0;
+
+		while (action < NUM_ACTIONS - 1){
+			cumulativeProbability += cur_strat[action];
+			if (r < cumulativeProbability)
+				break;
+			action++;
+		}
+
+		return action;
+	}
+		
 	
 }
