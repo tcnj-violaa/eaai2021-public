@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.TreeMap;
 import StateNode;
+import HistoryEntry;
 
 
 /**
@@ -44,7 +45,7 @@ public class CFRPlayer implements GinRummyPlayer {
 	private boolean opponentKnocked = false;
 	private boolean train = false;
 	private TreeMap<String,StateNode> stateNodeMap = new TreeMap<String, StateNode>; //change from string probably. We're gonn have more complicated history
-	private String turn_history = ""; //maybe a short player-based history, say, for the round (would make proper actions based on phase easier)
+	private ArrayList<HistoryEntry> history = new ArrayList<HistoryEntry>;
 	private final num_actions = 55;
 	private int[] actions = new int[num_actions]
 	//actions: 0 = draw face-up; 1 = draw from discard; 2 = knock ; 3 = don't knock ; 4-55 discard cards based on int index
@@ -65,6 +66,10 @@ public class CFRPlayer implements GinRummyPlayer {
 		this.cards.clear();
 		for (Card card : cards)
 			this.cards.add(card);
+		
+		long card_bits = GinRummyUtil.cardsToBitstring(this.cards);
+
+		history.add(new HistoryEntry(card_bits, 'i', "", this.playerNum))
 		opponentKnocked = false;
 		drawDiscardBitstrings.clear();
 	}
@@ -87,7 +92,7 @@ public class CFRPlayer implements GinRummyPlayer {
 		//work-in-progress cfr-based logic...
 		//cards_string and turn_history currently dummy variables, won't compile
 
-		String info = cards_string + turn_history;
+		String info = getFullHistory();
 		int draw_action = getAction(info);
 		boolean face_up = draw_action == 0 ? true : false;
 
@@ -99,10 +104,18 @@ public class CFRPlayer implements GinRummyPlayer {
 	public void reportDraw(int playerNum, Card drawnCard) {
 		// Add to history if other player draws
 		// Ignore other player draws.  Add to cards if playerNum is this player.
+		long card_bits = 0;
 		if (playerNum == this.playerNum) {
 			cards.add(drawnCard);
 			this.drawnCard = drawnCard;
+
+			card_bits = GinRummyUtil.cardsToBitstring(cards);
 		}
+
+		//Add event to history... if card_bits is 0, then it's the opponent's play
+		String drawn_card = drawnCard.toString();
+		history.add(new HistoryEntry(card_bits,'d',drawn_card,playernum));
+
 	}
 
 	@SuppressWarnings("unchecked")
@@ -142,14 +155,30 @@ public class CFRPlayer implements GinRummyPlayer {
 		drawDiscard.add(discard);
 		drawDiscardBitstrings.add(GinRummyUtil.cardsToBitstring(drawDiscard));
 		return discard;
+
+		//Draft code, won't compile
+		//
+		String info = getFullHistory();
+		int discard_action = getAction(info);
+		Card discard = getCard(discard_action-3)
+		//boolean face_up = draw_action == 0 ? true : false;
+
+		return discard;
+
 	}
 
 	@Override
 	public void reportDiscard(int playerNum, Card discardedCard) {
 		// Add other player discard to history...
 		// Ignore other player discards.  Remove from cards if playerNum is this player.
-		if (playerNum == this.playerNum)
+		long card_bits = 0;
+		if (playerNum == this.playerNum){
 			cards.remove(discardedCard);
+			card_bits = GinRummyUtil.cardsToBitstring(cards);
+		}
+
+		String discard = discardedCard.toString();
+		history.add(new HistoryEntry(card_bits, 'r', discard, playernum));
 	}
 
 	@Override
@@ -162,9 +191,9 @@ public class CFRPlayer implements GinRummyPlayer {
 		return bestMeldSets.isEmpty() ? new ArrayList<ArrayList<Card>>() : bestMeldSets.get(random.nextInt(bestMeldSets.size()));
 
 		//WIP code - depending on implementation may need checking for validity of knocking...
-		String info = cards_string + turn_history;
-		int draw_action = getAction(info);
-		boolean knock = draw_action == 0 ? true : false;
+		String info = getFullHistory();
+		int knock_action = getAction(info);
+		boolean knock = knock_action == 2 ? true : false;
 		return knock;
 	
 	}
@@ -198,7 +227,7 @@ public class CFRPlayer implements GinRummyPlayer {
 		Node node = nodeMap.get(state_node);
 
 		//Currently just get player 1's strategy--we're only maintaining a 
-		//tree for this player anyway
+		//tree for this player anyway? Maybe change if there are bugs
 		double[] cur_strat = node.getStrategy(0);
 
 		double r = random.nextDouble();
@@ -213,6 +242,16 @@ public class CFRPlayer implements GinRummyPlayer {
 		}
 
 		return action;
+	}
+
+	private String getFullHistory(){
+		StringBuilder h = new StringBuilder();
+		for (int i = 0; i < history.size()-1; i++){
+			h.append(history[i].getTag())
+		}
+		
+		String strhist = h.toString();
+		return strhist;
 	}
 		
 	
