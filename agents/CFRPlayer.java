@@ -67,6 +67,7 @@ public class CFRPlayer implements GinRummyPlayer {
 		for (Card card : cards)
 			this.cards.add(card);
 		
+		history.removeAll(); //Clear history
 		long card_bits = GinRummyUtil.cardsToBitstring(this.cards);
 
 		history.add(new HistoryEntry(card_bits, 'i', "", this.playerNum))
@@ -156,8 +157,7 @@ public class CFRPlayer implements GinRummyPlayer {
 		drawDiscardBitstrings.add(GinRummyUtil.cardsToBitstring(drawDiscard));
 		return discard;
 
-		//Draft code, won't compile
-		//
+		//Draft code, won't compile; conflicts with above code
 		String info = getFullHistory();
 		int discard_action = getAction(info);
 		Card discard = getCard(discard_action-3)
@@ -202,8 +202,14 @@ public class CFRPlayer implements GinRummyPlayer {
 	public void reportFinalMelds(int playerNum, ArrayList<ArrayList<Card>> melds) {
 		// Add to history?
 		// Melds ignored by simple player, but could affect which melds to make for complex player.
-		if (playerNum != this.playerNum)
+		long card_bits = 0;
+		if (playerNum != this.playerNum){
 			opponentKnocked = true;
+			card_bits = GinRummyUtil.cardsToBitstring(cards);
+		}
+
+		//Is this logic sufficient? Will store two 'knock' actions
+		history.add(new HistoryEntry(card_bits, 'k', "", playerNum);
 	}
 
 	@Override
