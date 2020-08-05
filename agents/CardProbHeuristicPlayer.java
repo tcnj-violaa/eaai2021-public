@@ -2,6 +2,7 @@ import ginrummy.*;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Arrays;
+//import java.
 
 
 /**
@@ -43,6 +44,8 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 	protected Random random = new Random();
 	protected boolean opponentKnocked = false;
 	protected final int NUM_LOCS = 4;
+	protected final int MAX_HAND = 10;
+	Card dummyCard;
 	Card faceUpCard, drawnCard;
 	ArrayList<Long> drawDiscardBitstrings = new ArrayList<Long>();
 
@@ -84,15 +87,34 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 
 	@Override
 	public boolean willDrawFaceUpCard(Card card) {
-		// Return true if card would be a part of a meld, false otherwise.
+		// Return true if the card is a meld -and- will reduce the amount of deadwood
+		// Should keep good melds from being destroyed, I think
 		this.faceUpCard = card;
 		findCard(card, DISCARD_PILE);
 		@SuppressWarnings("unchecked")
 		ArrayList<Card> newCards = (ArrayList<Card>) cards.clone();
 		newCards.add(card);
-		for (ArrayList<Card> meld : GinRummyUtil.cardsToAllMelds(newCards))
-			if (meld.contains(card))
+		ArrayList<ArrayList<ArrayList<Card>>> orig_best_melds = GinRummyUtil.cardsToBestMeldSets(cards);
+		ArrayList<ArrayList<ArrayList<Card>>> new_best_melds = GinRummyUtil.cardsToBestMeldSets(newCards);
+
+		int orig_deadwood = GinRummyUtil.getDeadwoodPoints(cards); //In case there are no melds
+		for (ArrayList<ArrayList<Card>> meld_set : orig_best_melds){
+			orig_deadwood = GinRummyUtil.getDeadwoodPoints(meld_set, cards);
+		}
+
+		int potent_deadwood = GinRummyUtil.getDeadwoodPoints(newCards); //In case there are no melds...
+		for (ArrayList<ArrayList<Card>> meld_set : new_best_melds){
+			potent_deadwood = GinRummyUtil.getDeadwoodPoints(meld_set, newCards);
+		}
+
+		//System.out.println("orig_deadwood: " + orig_deadwood + " | potent_deadwood: " + potent_deadwood);
+		for (ArrayList<Card> meld : GinRummyUtil.cardsToAllMelds(newCards)){
+			//System.out.println("contains : " + meld.contains(card));
+			if (meld.contains(card) && potent_deadwood <= orig_deadwood){
+				//System.out.println("Drawing face-up...");
 				return true;
+			}
+		}
 		return false;
 	}
 
@@ -161,9 +183,27 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 	public ArrayList<ArrayList<Card>> getFinalMelds() {
 		// Check if deadwood of maximal meld is low enough to go out.
 		ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(cards);
-		if (!opponentKnocked && (bestMeldSets.isEmpty() || GinRummyUtil.getDeadwoodPoints(bestMeldSets.get(0), cards) > GinRummyUtil.MAX_DEADWOOD))
+
+		int ourDeadwood = bestMeldSets.isEmpty() ? GinRummyUtil.getDeadwoodPoints(cards) : GinRummyUtil.getDeadwoodPoints(bestMeldSets.get(0), cards);
+
+		//Guess what the opponent's deadwood might be
+		ArrayList<Card> oppHand = inferOppHand();
+		ArrayList<ArrayList<ArrayList<Card>>> oppMelds = GinRummyUtil.cardsToBestMeldSets(oppHand);
+		int potentialOppDeadwood = oppMelds.isEmpty() ? GinRummyUtil.getDeadwoodPoints(oppHand) : 
+			GinRummyUtil.getDeadwoodPoints(oppMelds.get(0), oppHand);
+		
+		//If our deadwood is probably less than the opponent's, then knock.
+		//If it's unlikely, then don't to avoid being undercut and losing points.
+		//If we have gin, then definitely knock.
+	
+		if (!opponentKnocked && (bestMeldSets.isEmpty() || GinRummyUtil.getDeadwoodPoints(bestMeldSets.get(0), cards) > GinRummyUtil.MAX_DEADWOOD || ourDeadwood > potentialOppDeadwood))
 			return null;
+
+				
+
+		//System.out.println("Knocking!");
 		return bestMeldSets.isEmpty() ? new ArrayList<ArrayList<Card>>() : bestMeldSets.get(random.nextInt(bestMeldSets.size()));
+
 	}
 
 	@Override
@@ -202,7 +242,11 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 		System.out.println("Calling printprobs");
 		for (int loc = 0 ; loc < NUM_LOCS; loc++){
 			System.out.println(loc);
-			System.out.println(card_probs[loc].toString());
+			//System.out.println(card_probs[loc].toString());
+			for (int card = 0; card < 52; card++){
+				System.out.print(card_probs[loc][card] + " ");
+			}
+			System.out.println(" ");
 		}
 	}
 
@@ -258,6 +302,86 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 		}
 
 		//printProbs();
+	}
+
+	//Over the course of face-up draws and discards we can infer what the opponent's hand is.
+	//The more face-up draws they do, the more we know exactly what their hand is. 
+	//Returns a list of known cards -- those with "1.0" probability in the probs map
+	private ArrayList<Card> getKnownOpp(){
+		ArrayList<Card> tempOpp = new ArrayList<Card>();
+		ArrayList<Integer> temp = new ArrayList<Integer>();
+		for (int card = 0; card < 52; card++){
+			if (card_probs[THEIR_HAND][card] == 1.0){
+				temp.add(card);
+			}
+		}
+
+		for (Integer card : temp) {
+			tempOpp.add(Card.getCard((int)card));
+		}
+
+		return tempOpp;
+	}
+
+	private ArrayList<Card> inferOppHand(){
+		ArrayList<Card> tempOpp = getKnownOpp();
+		ArrayList<Integer> guessTemp = new ArrayList<Integer>();
+		int handLength = tempOpp.size();
+
+		/* WIP code for guessing what cards they may have in melds based on 
+		 * what isn't in a meld of the cards of theirs we know--assuming that 
+		 * a player would avoid having high rank cards (like qkj) if they don't have
+		 * a meld containing them...
+		ArrayList<ArrayList<ArrayList<Card>>> probMeldSets = cardsToBestMeldSets(tempOpp);
+		int pick_rand = random.NextInt() % probMeldSets.size();
+
+		ArrayList<ArrayList<Card>> probMelds = probMeldSets.get(pick_rand);
+		ArrayList<ArrayList<Card>> probMelds = probMeldSets.size() > 0 ? probMeldSets.get(pick_rand) : null;
+
+		int knownDeadwood;
+
+		if(probMelds != null){
+			knownDeadwood = GinRummyUtil.getDeadwoodPoints(probMelds, tempOpp);
+		}
+		else{
+			knownDeadwood = GinRummyUtil.getDeadwoodPoints(tempOpp);
+		}
+		*/
+
+		
+		
+
+		//Finally, guess what the remaining cards might be otherwise...
+		//System.out.println("Guessing " + (10-handLength) + " remaining cards in the opponent's hand...");
+		
+		//Get a list of likely cards: find the highest probability
+		double maxProb = 0.0;
+		for(int card = 0; card < 52; card++){
+			if(card_probs[THEIR_HAND][card] > maxProb)
+				maxProb = card_probs[THEIR_HAND][card];
+		}
+
+		//
+		//Add these likely cards to a list...
+		for(int card = 0; card < 52; card++){
+			if(card_probs[THEIR_HAND][card] >= maxProb)
+				guessTemp.add(card);
+		}
+
+		//Fill in the remainder of the hand -- "guess" what the cards might be
+		//by picking random cards from the above list until we reach a full hand.
+		while(tempOpp.size() <10 && guessTemp.size() > 0){
+			int pick_rand = random.nextInt(guessTemp.size());
+			int cardId = guessTemp.get(pick_rand);
+			tempOpp.add(Card.getCard(cardId));
+			guessTemp.remove(pick_rand);
+		}
+
+		//Potential errors: if we have only a couple high probability options and run out,
+		//then our max probability might prevent us from filling the remaining cards with
+		//the next highest probability
+		//System.out.println("guessed hand size: " + tempOpp.size());
+		return tempOpp;
 	}
 
 	private void probsInit(){
