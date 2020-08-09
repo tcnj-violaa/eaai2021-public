@@ -41,6 +41,7 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 	@SuppressWarnings("unused")
 	protected int startingPlayerNum;
 	protected ArrayList<Card> cards = new ArrayList<Card>();
+	protected ArrayList<Card> oppCards = new ArrayList<Card>();
 	protected Random random = new Random();
 	protected boolean opponentKnocked = false;
 	protected final int NUM_LOCS = 4;
@@ -79,7 +80,7 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 			}
 		}
 
-		//printProbs();
+		printProbs();
 		opponentKnocked = false;
 		drawDiscardBitstrings.clear();
 
@@ -128,7 +129,15 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 		}
 
 		else{
-			findCard(drawnCard, THEIR_HAND);
+			//If we know what their card is, as in they drew face-up, then
+			//modify our probabilities
+			if(drawnCard != null){
+				ArrayList<Card> uncertain = findUncertainCards();
+				System.out.println(drawnCard.toString());
+				drawInferMeldProbs(drawnCard, uncertain);
+				findCard(drawnCard, THEIR_HAND);
+				printProbs();
+			}
 		}
 	}
 
@@ -173,34 +182,46 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 	@Override
 	public void reportDiscard(int playerNum, Card discardedCard) {
 		// Ignore other player discards.  Remove from cards if playerNum is this player.
-		if (playerNum == this.playerNum)
+		if (playerNum == this.playerNum){
 			cards.remove(discardedCard);
+		}
+		else{ 
+			ArrayList<Card> uncertain = findUncertainCards();
+			discardInferMeldProbs(discardedCard, uncertain);
+		}
 
 		findCard(discardedCard, DISCARD_PILE);
+		printProbs();
 	}
 
 	@Override
 	public ArrayList<ArrayList<Card>> getFinalMelds() {
 		// Check if deadwood of maximal meld is low enough to go out.
+		double confidenceThreshold = 0.1;
 		ArrayList<ArrayList<ArrayList<Card>>> bestMeldSets = GinRummyUtil.cardsToBestMeldSets(cards);
 
 		int ourDeadwood = bestMeldSets.isEmpty() ? GinRummyUtil.getDeadwoodPoints(cards) : GinRummyUtil.getDeadwoodPoints(bestMeldSets.get(0), cards);
 
 		//Guess what the opponent's deadwood might be
-		ArrayList<Card> oppHand = inferOppHand();
-		ArrayList<ArrayList<ArrayList<Card>>> oppMelds = GinRummyUtil.cardsToBestMeldSets(oppHand);
-		int potentialOppDeadwood = oppMelds.isEmpty() ? GinRummyUtil.getDeadwoodPoints(oppHand) : 
-			GinRummyUtil.getDeadwoodPoints(oppMelds.get(0), oppHand);
+		//Consider what max difference and min difference of potential deadwoods would be 
+		double oppHandConfidence = inferOppHand();
+		System.out.println("confidence: " + oppHandConfidence);
+
+		//oppCards;
 		
+		
+		ArrayList<ArrayList<ArrayList<Card>>> oppMelds = GinRummyUtil.cardsToBestMeldSets(oppCards);
+		int potentialOppDeadwood = oppMelds.isEmpty() ? GinRummyUtil.getDeadwoodPoints(oppCards) : 
+			GinRummyUtil.getDeadwoodPoints(oppMelds.get(0), oppCards);
+			
 		//If our deadwood is probably less than the opponent's, then knock.
 		//If it's unlikely, then don't to avoid being undercut and losing points.
 		//If we have gin, then definitely knock.
 	
-		if (!opponentKnocked && (bestMeldSets.isEmpty() || GinRummyUtil.getDeadwoodPoints(bestMeldSets.get(0), cards) > GinRummyUtil.MAX_DEADWOOD || ourDeadwood > potentialOppDeadwood))
+		if (!opponentKnocked && (bestMeldSets.isEmpty() || GinRummyUtil.getDeadwoodPoints(bestMeldSets.get(0), cards) > GinRummyUtil.MAX_DEADWOOD || oppHandConfidence < confidenceThreshold || potentialOppDeadwood < ourDeadwood))
 			return null;
 
 				
-
 		//System.out.println("Knocking!");
 		return bestMeldSets.isEmpty() ? new ArrayList<ArrayList<Card>>() : bestMeldSets.get(random.nextInt(bestMeldSets.size()));
 
@@ -217,7 +238,7 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 
 		for (ArrayList<Card> meld : melds) {
 			for (Card card : meld) {
-				findCard(card, hand);
+				//findCard(card, hand);
 			}
 		}
 	}
@@ -225,6 +246,8 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 	@Override
 	public void reportScores(int[] scores) {
 		// Ignored by simple player, but could affect strategy of more complex player.
+		System.out.println(Arrays.toString(scores));
+		System.out.println("----End of round----");
 	}
 
 	@Override
@@ -242,12 +265,15 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 		System.out.println("Calling printprobs");
 		for (int loc = 0 ; loc < NUM_LOCS; loc++){
 			System.out.println(loc);
+			System.out.println(Arrays.toString(card_probs[loc]));
 			//System.out.println(card_probs[loc].toString());
-			for (int card = 0; card < 52; card++){
+
+			/*for (int card = 0; card < 52; card++){
 				System.out.print(card_probs[loc][card] + " ");
-			}
+			}*/
 			System.out.println(" ");
 		}
+
 	}
 
 	//If we see a card definitely, set probabilities accordingly
@@ -323,10 +349,14 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 		return tempOpp;
 	}
 
-	private ArrayList<Card> inferOppHand(){
+	private double inferOppHand(){
+		oppCards.clear();
 		ArrayList<Card> tempOpp = getKnownOpp();
 		ArrayList<Integer> guessTemp = new ArrayList<Integer>();
+		//ArrayList<double> allProbs = new ArrayList<double>();
+		double[] allProbs = new double[52];
 		int handLength = tempOpp.size();
+		int unknownCards = 10-handLength;
 
 		/* WIP code for guessing what cards they may have in melds based on 
 		 * what isn't in a meld of the cards of theirs we know--assuming that 
@@ -348,41 +378,150 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 		}
 		*/
 
+		double cumulativeProbability = 1.0;
+		Arrays.sort(allProbs);
 		
-		
+		//Get the 10 highest probability cards, compute probability
+		for(int card = 41; card < 52; card++)
+			cumulativeProbability *= allProbs[card];
 
-		//Finally, guess what the remaining cards might be otherwise...
-		//System.out.println("Guessing " + (10-handLength) + " remaining cards in the opponent's hand...");
-		
-		//Get a list of likely cards: find the highest probability
-		double maxProb = 0.0;
-		for(int card = 0; card < 52; card++){
-			if(card_probs[THEIR_HAND][card] > maxProb)
-				maxProb = card_probs[THEIR_HAND][card];
-		}
-
-		//
-		//Add these likely cards to a list...
-		for(int card = 0; card < 52; card++){
-			if(card_probs[THEIR_HAND][card] >= maxProb)
-				guessTemp.add(card);
-		}
+		//Get the highest probability cards, based on the amount we need
+		for(int card = 51-unknownCards; card < 52; card++)
+			guessTemp.add(card);
 
 		//Fill in the remainder of the hand -- "guess" what the cards might be
 		//by picking random cards from the above list until we reach a full hand.
-		while(tempOpp.size() <10 && guessTemp.size() > 0){
+		while(tempOpp.size() < 10 && guessTemp.size() > 0){
 			int pick_rand = random.nextInt(guessTemp.size());
 			int cardId = guessTemp.get(pick_rand);
 			tempOpp.add(Card.getCard(cardId));
 			guessTemp.remove(pick_rand);
 		}
 
-		//Potential errors: if we have only a couple high probability options and run out,
-		//then our max probability might prevent us from filling the remaining cards with
-		//the next highest probability
-		//System.out.println("guessed hand size: " + tempOpp.size());
-		return tempOpp;
+		System.out.println("guessed hand size: " + tempOpp.size());
+		oppCards = (ArrayList<Card>)tempOpp.clone();
+		return cumulativeProbability;
 	}
+
+	private void drawInferMeldProbs(Card card, ArrayList<Card> unknown){
+		//Modify probabilities of other cards based on discards or face-up draws--
+		//assuming the opponent is playing strategically, what they discard or draw
+		//reveals a lot about their hands. For draw, increase probability of melds; 
+		//for discard decrease probability of cards in meld -- for both, normalize according to 
+		//amount modified. Eg. each column for a card across all locations must sum to one.
+
+		//Given a card and the list of cards of undetermined location (ie. those with < 1.0 prob),
+		//use cardstoallmelds to get a list of all melds, and find melds with the drawn/discarded card
+		//in them. For those melds, adjust probabilities and normalize accordingly.
+		//
+
+		ArrayList<Card> allCards = unknown;
+		allCards.add(card);
+		System.out.println(allCards.size());
+		System.out.println(allCards.toString());
+
+		//Find all melds...
+		ArrayList<ArrayList<Card>> allMelds = GinRummyUtil.cardsToAllMelds(allCards);
+
+		//Go through all of these melds, and if the meld contains the drawn card,
+		//increase the probability of those cards being in the opponent's hand...
+		//Assumes the opponent is drawing cards that are beneficial.
+		for (ArrayList<Card> meld : allMelds){
+			if(meld.contains(card)){
+				for (Card meldCard : meld){
+					int idx = meldCard.getId();
+					card_probs[THEIR_HAND][idx] += 0.1;
+					card_probs[DISCARD_PILE][idx] -= 0.05;
+					card_probs[DECK][idx] -= 0.05;
+
+					//Ensure that probs are within bounds...
+					if (card_probs[THEIR_HAND][idx] > 1.0)
+						card_probs[THEIR_HAND][idx] = 1.0;
+
+					if (card_probs[DISCARD_PILE][idx] < 0.0)
+						card_probs[DISCARD_PILE][idx] = 0.0;
+
+					if (card_probs[DECK][idx] < 0.0)
+						card_probs[DECK][idx] = 0.0;
+				}
+
+			}
+
+		}
+	}
+
+	private void discardInferMeldProbs(Card card, ArrayList<Card> unknown){
+		//Modify probabilities of other cards based on discards or face-up draws--
+		//assuming the opponent is playing strategically, what they discard or draw
+		//reveals a lot about their hands. For draw, increase probability of melds; 
+		//for discard, decrease probability of cards in meld -- for both, normalize according to 
+		//amount modified, ie. each column for a card across all locations must sum to one.
+
+		//Given a card and the list of cards of undetermined location (ie. those with < 1.0 prob),
+		//use cardstoallmelds to get a list of all melds, and find melds with the drawn/discarded card
+		//in them. For those melds, adjust probabilities and normalize accordingly.
+		//
+
+		ArrayList<Card> allCards = unknown;
+		allCards.add(card);
+		System.out.println(allCards.size());
+
+		//Find all melds...
+		ArrayList<ArrayList<Card>> allMelds = GinRummyUtil.cardsToAllMelds(allCards);
+
+		//Go through all of these melds, and if the meld contains the discarded card,
+		//discarded the probability of those cards being in the opponent's hand...
+		//Assumes the opponent is discarding cards that are unnecessary.
+		for (ArrayList<Card> meld : allMelds){
+			if(meld.contains(card)){
+				for (Card meldCard : meld){
+					int idx = meldCard.getId();
+					card_probs[THEIR_HAND][idx] -= 0.1;
+					card_probs[DISCARD_PILE][idx] += 0.05;
+					card_probs[DECK][idx] += 0.05;
+
+					
+					double overflow = card_probs[DECK][idx] + card_probs[DISCARD_PILE][idx] - 1;
+					if (overflow > 0.0) {
+						double fix = overflow / 2.0;
+						card_probs[THEIR_HAND][idx] -= fix;
+						card_probs[DECK][idx] -=fix;
+					}
+					//if (card_probs[DECK][idx] + card_probs[DISCARD_PILE][idx] > 1.0){
+
+					//Ensure that probs are within bounds...
+					if (card_probs[THEIR_HAND][idx] < 0.0)
+						card_probs[THEIR_HAND][idx] = 0.0;
+
+					if (card_probs[DISCARD_PILE][idx] > 1.0)
+						card_probs[DISCARD_PILE][idx] = 1.0;
+
+					if (card_probs[DECK][idx] > 1.0)
+						card_probs[DECK][idx] = 1.0;
+
+				}
+
+			}
+
+		}
+	}
+
+
+	private ArrayList<Card> findUncertainCards(){
+		ArrayList<Card> unknown = new ArrayList<Card>();
+		for (int location = 0; location < NUM_LOCS; location++){
+			for (int card = 0; card < 52; card++){
+				if (card_probs[location][card] < 1.0 && card_probs[location][card] > 0.0){
+					Card temp_card = Card.getCard(card);
+					if(!unknown.contains(temp_card))
+						unknown.add(temp_card);
+				}
+			}
+		}
+
+		return unknown;
+	}
+
 
 	private void probsInit(){
 		for (int loc = 0; loc < NUM_LOCS; loc++){
