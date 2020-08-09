@@ -80,7 +80,7 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 			}
 		}
 
-		printProbs();
+		//printProbs();
 		opponentKnocked = false;
 		drawDiscardBitstrings.clear();
 
@@ -136,7 +136,7 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 				System.out.println(drawnCard.toString());
 				drawInferMeldProbs(drawnCard, uncertain);
 				findCard(drawnCard, THEIR_HAND);
-				printProbs();
+				//printProbs();
 			}
 		}
 	}
@@ -191,7 +191,7 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 		}
 
 		findCard(discardedCard, DISCARD_PILE);
-		printProbs();
+		//printProbs();
 	}
 
 	@Override
@@ -205,7 +205,6 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 		//Guess what the opponent's deadwood might be
 		//Consider what max difference and min difference of potential deadwoods would be 
 		double oppHandConfidence = inferOppHand();
-		System.out.println("confidence: " + oppHandConfidence);
 
 		//oppCards;
 		
@@ -214,6 +213,10 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 		int potentialOppDeadwood = oppMelds.isEmpty() ? GinRummyUtil.getDeadwoodPoints(oppCards) : 
 			GinRummyUtil.getDeadwoodPoints(oppMelds.get(0), oppCards);
 			
+		System.out.println("ourDeadwood: " + ourDeadwood);
+		System.out.println("oppDeadwood: " + potentialOppDeadwood);
+		System.out.println("confidence: " + oppHandConfidence);
+
 		//If our deadwood is probably less than the opponent's, then knock.
 		//If it's unlikely, then don't to avoid being undercut and losing points.
 		//If we have gin, then definitely knock.
@@ -354,7 +357,7 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 		ArrayList<Card> tempOpp = getKnownOpp();
 		ArrayList<Integer> guessTemp = new ArrayList<Integer>();
 		//ArrayList<double> allProbs = new ArrayList<double>();
-		double[] allProbs = new double[52];
+		double[] allProbs = card_probs[THEIR_HAND].clone();
 		int handLength = tempOpp.size();
 		int unknownCards = 10-handLength;
 
@@ -369,7 +372,6 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 		ArrayList<ArrayList<Card>> probMelds = probMeldSets.size() > 0 ? probMeldSets.get(pick_rand) : null;
 
 		int knownDeadwood;
-
 		if(probMelds != null){
 			knownDeadwood = GinRummyUtil.getDeadwoodPoints(probMelds, tempOpp);
 		}
@@ -380,14 +382,20 @@ public class CardProbHeuristicPlayer implements GinRummyPlayer {
 
 		double cumulativeProbability = 1.0;
 		Arrays.sort(allProbs);
+		System.out.println(Arrays.toString(allProbs));
+
 		
 		//Get the 10 highest probability cards, compute probability
-		for(int card = 41; card < 52; card++)
+		for(int card = 41; card < 52; card++){
+			System.out.println("probability: " + allProbs[card]);
 			cumulativeProbability *= allProbs[card];
+		}
 
 		//Get the highest probability cards, based on the amount we need
-		for(int card = 51-unknownCards; card < 52; card++)
-			guessTemp.add(card);
+		for(int card = 41; card < 52; card++){
+			if (card != 1.0)
+				guessTemp.add(card);
+		}
 
 		//Fill in the remainder of the hand -- "guess" what the cards might be
 		//by picking random cards from the above list until we reach a full hand.
